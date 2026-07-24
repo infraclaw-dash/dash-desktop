@@ -32,6 +32,26 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Probe mainnet identity lookup
+        shell: bash
+        run: |
+          node --input-type=module -e "
+            import {DashPlatformSDK} from 'dash-platform-sdk';
+            const identifier = 'EWSqsaghuwHRjtutbXK3nR11KbRkg9a12PNAAkJWRTpY';
+            const sdk = new DashPlatformSDK({network: 'mainnet'});
+            const identity = await sdk.identities.getIdentityByIdentifier(identifier);
+            const publicKeys = await sdk.identities.getIdentityPublicKeys(identifier);
+            console.log(JSON.stringify({
+              found: identity != null,
+              publicKeys: publicKeys.map(key => ({
+                keyId: key.keyId,
+                purpose: key.purpose,
+                publicKeyHash: key.getPublicKeyHash(),
+              })),
+            }));
+            process.exit();
+          "
+
       - name: Build Windows installer
         run: yarn build:win
 
