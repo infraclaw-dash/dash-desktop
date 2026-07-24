@@ -1,0 +1,43 @@
+name: Build Windows test artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref or commit to build
+        required: true
+        default: master
+
+permissions:
+  contents: read
+
+jobs:
+  build_windows:
+    runs-on: windows-2022
+    steps:
+      - name: Check out requested ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: yarn
+
+      - name: Install Yarn
+        run: npm install --global yarn@1.22.22
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Windows installer
+        run: yarn build:win
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: dash-desktop-windows-${{ github.run_number }}
+          path: dist/*.exe
+          if-no-files-found: error
